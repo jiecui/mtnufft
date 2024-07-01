@@ -1,4 +1,4 @@
-# A Fast Power Spectrum Estimation in Nonuniformly Sampled Time Series
+# A Fast Multitaper Power Spectrum Estimation in Nonuniformly Sampled Time Series
 
 ## Introduction
 
