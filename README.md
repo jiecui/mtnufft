@@ -6,7 +6,7 @@ This is the code for the paper.
 
 ## Getting Started
 
-1. Install [Chronux](https://github.com/jiecui/chronux) computational toolbox.
+1. Download and install [Chronux](https://github.com/jiecui/chronux) computational toolbox.
 
 2. Software dependencies
 
