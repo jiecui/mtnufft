@@ -8,7 +8,7 @@ This is the code for the paper.
 
 1. Download and install [Chronux](https://github.com/jiecui/chronux) computational toolbox.
 
-2. Software dependencies
+2. Download and install [MTNUFFT](https://github.com/jiecui/mtnufft) package.
 
 ## Build and Test
 
