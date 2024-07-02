@@ -12,7 +12,7 @@ This is the code for the paper.
 
 ## Build and Test
 
-1. Run ```imp_example_analysis.m```
+1. Analysis of example impedance signal: ```imp_example_analysis.m```
 
 ## Contribute
 
