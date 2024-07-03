@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This is the code for the paper.
+This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
 ## Getting Started
 
@@ -19,3 +19,5 @@ This is the code for the paper.
 [Laboratory of Bioelectronics Neurophysiology and Engineering at Mayo Clinic](https://www.mayo.edu/research/labs/bioelectronics-neurophysiology-engineering/overview)
 
 ## References
+
+* __J. Cui__, B. H. Brinkmann, G. A. Worrell, _A fast multitaper power spectrum estimation in nonuniformly sampled time series_, [arXiv, 5704101](https://arxiv.org/abs/2407.01943), 2024 [[PDF]](./docs/fast_mtnufft_arxiv_v1.pdf).
