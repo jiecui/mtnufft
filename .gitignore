@@ -9,7 +9,6 @@
 checkpoint
 logs/*
 tf_logs/*
-images/**/*.png
 images/**/*.dot
 my_*
 person.proto
