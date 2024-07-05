@@ -1,4 +1,4 @@
-# A Fast Multitaper Power Spectrum Estimation in Nonuniformly Sampled Time Series
+# ![mayo](./images/mayo_logo.png "Mayo Clinic") A Fast Multitaper Power Spectrum Estimation in Nonuniformly Sampled Time Series
 
 ## Introduction
 
