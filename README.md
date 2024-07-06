@@ -1,4 +1,4 @@
-# <img src="./images/mayo_logo.png" alt="[Mayo Clinic]" width="40"/> A Fast Multitaper Power Spectrum Estimation in Nonuniformly Sampled Time Series
+# A Fast Multitaper Power Spectrum Estimation in Nonuniformly Sampled Time Series
 
 ## Introduction
 
@@ -16,7 +16,7 @@ This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
 ## Contribute
 
-[Laboratory of Bioelectronics Neurophysiology and Engineering at Mayo Clinic](https://www.mayo.edu/research/labs/bioelectronics-neurophysiology-engineering/overview)
+ <img src="./images/mayo_logo.png" alt="[Mayo Clinic]" width="50"/> [Laboratory of Bioelectronics Neurophysiology and Engineering at Mayo Clinic](https://www.mayo.edu/research/labs/bioelectronics-neurophysiology-engineering/overview)
 
 ## References
 
