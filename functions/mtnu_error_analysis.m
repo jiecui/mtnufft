@@ -16,7 +16,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     % See also .
 
     % Copyright 2024 Richard J. Cui. Created: Tue 07/02/2024 10:37:03.476 AM
-    % $Revision: 0.1 $  $Date: Tue 07/02/2024 10:37:03.513 AM $
+    % $Revision: 0.2 $  $Date: Sun 07/07/2024 12:15:57.004 AM $
     %
     % Rocky Creek Dr. NE
     % Rochester, MN 55906, USA
@@ -30,8 +30,11 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     arguments
         options.BandHalfWidth (1, 1) double {mustBePositive} = .05 % half width of the band (Hz)
         options.Duration (1, 1) double {mustBePositive} = 50 % duration of the signal (s)
+        options.FcMax (1, 1) double = nan % maximum center frequency of analysis bands (Hz)
+        options.FcMin (1, 1) double = nan % minimum center frequency of analysis bands (Hz)
         options.GWNPower (1, 1) double = 0 % power of Gaussian white noise (dB)
         options.MaxFrequency (1, 1) double = 1/2 % maximum frequency of the signal (Hz)
+        options.MinFrequency (1, 1) double = 0 % minimum frequency of the signal (Hz
         options.NumTimePoints (1, 1) double {mustBeInteger, mustBePositive} = 50 % number of time points
         options.NumTrials (1, 1) double {mustBeInteger, mustBePositive} = 1000 % number of trials
         options.NumFreqPoints (1, 1) double {mustBeInteger, mustBePositive} = 200 % number of frequency points
@@ -43,7 +46,10 @@ function e_table = mtnu_error_analysis(rng_seed, options)
 
     fw = options.BandHalfWidth;
     T = options.Duration;
+    fc_max = options.FcMax;
+    fc_min = options.FcMin;
     fmax = options.MaxFrequency;
+    fmin = options.MinFrequency;
     num_points = options.NumTimePoints;
     num_trials = options.NumTrials;
     num_fc = options.NumFreqPoints;
@@ -60,7 +66,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Processing %s time points ...", tp_method_k)
         e_table.(tp_method_k) = err_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fmax, T, fw, gw_std);
+            num_trials, num_fc, fc_max, fc_min, fmin, fmax, T, fw, gw_std);
         fprintf(" done.\n")
     end % for
 
@@ -72,7 +78,7 @@ end % function mtnu_error_analysis
 % ==========================================================================
 % subroutines
 % ==========================================================================
-function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fmax, T, fw, gw_std)
+function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, fw, gw_std)
 
     arguments
         tp_method (1, :) string
@@ -80,11 +86,24 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
         num_points (1, 1) double {mustBeInteger, mustBePositive}
         num_trials (1, 1) double {mustBeInteger, mustBePositive}
         num_fc (1, 1) double {mustBeInteger, mustBePositive}
-        fmax (1, 1) double {mustBePositive}
+        fc_min (1, 1) double
+        fc_max (1, 1) double
+        fmin (1, 1) double
+        fmax (1, 1) double
         T (1, 1) double {mustBePositive}
         fw (1, 1) double {mustBePositive}
         gw_std (1, 1) double {mustBePositive}
     end % positional
+
+    % pramaeters
+    % ----------
+    if isnan(fc_min)
+        fc_min = fmin + fw;
+    end % if
+
+    if isnan(fc_max)
+        fc_max = fmax - fw;
+    end % if
 
     % * sampling points of time instants
     bg = mtnusp.BronezGPSS();
@@ -113,7 +132,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
     t = t(:);
 
     % * frequency points of interest
-    fc = linspace(0, fmax, num_fc)';
+    fc = linspace(fc_min, fc_max, num_fc)';
     TW = T * fw;
     K = 2 * TW - 1;
 
@@ -125,12 +144,12 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
     rng(rng_seed)
 
     % * process sample points
-    RB = bg.gpssmat(0, fmax, t);
+    RB = bg.gpssmat(fmin, fmax, t);
     L = chol(RB, 'lower');
 
     % * parameters for BronezGPSS
     A = [fc, ones(num_fc, 1) * .05]; % analysis bands
-    B = [0, fmax]; % signal bands
+    B = [fmin, fmax]; % signal bands
 
     err_mtnu = zeros(num_fc, num_trials); % error of MTNUFFT
     err_mtls = zeros(num_fc, num_trials); % error of MTLS
