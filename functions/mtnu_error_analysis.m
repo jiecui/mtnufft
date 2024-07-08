@@ -16,7 +16,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     % See also .
 
     % Copyright 2024 Richard J. Cui. Created: Tue 07/02/2024 10:37:03.476 AM
-    % $Revision: 0.2 $  $Date: Sun 07/07/2024 12:15:57.004 AM $
+    % $Revision: 0.3 $  $Date: Mon 07/08/2024 15:31:07.902 PM $
     %
     % Rocky Creek Dr. NE
     % Rochester, MN 55906, USA
@@ -44,7 +44,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
             = ["Uniform", "MissingPoints", "ArithmeticSampling", "Jittering"] % method to generate time points
     end % optional
 
-    fw = options.BandHalfWidth;
+    f_w = options.BandHalfWidth;
     T = options.Duration;
     fc_max = options.FcMax;
     fc_min = options.FcMin;
@@ -66,7 +66,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Processing %s time points ...", tp_method_k)
         e_table.(tp_method_k) = err_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fc_max, fc_min, fmin, fmax, T, fw, gw_std);
+            num_trials, num_fc, fc_max, fc_min, fmin, fmax, T, f_w, gw_std);
         fprintf(" done.\n")
     end % for
 
@@ -78,7 +78,7 @@ end % function mtnu_error_analysis
 % ==========================================================================
 % subroutines
 % ==========================================================================
-function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, fw, gw_std)
+function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std)
 
     arguments
         tp_method (1, :) string
@@ -91,18 +91,18 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
         fmin (1, 1) double
         fmax (1, 1) double
         T (1, 1) double {mustBePositive}
-        fw (1, 1) double {mustBePositive}
+        f_w (1, 1) double {mustBePositive}
         gw_std (1, 1) double {mustBePositive}
     end % positional
 
     % pramaeters
     % ----------
     if isnan(fc_min)
-        fc_min = fmin + fw;
+        fc_min = fmin + f_w;
     end % if
 
     if isnan(fc_max)
-        fc_max = fmax - fw;
+        fc_max = fmax - f_w;
     end % if
 
     % * sampling points of time instants
@@ -133,7 +133,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
 
     % * frequency points of interest
     fc = linspace(fc_min, fc_max, num_fc)';
-    TW = T * fw;
+    TW = T * f_w;
     K = 2 * TW - 1;
 
     % * grand truth of spectrum
@@ -148,7 +148,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
     L = chol(RB, 'lower');
 
     % * parameters for BronezGPSS
-    A = [fc, ones(num_fc, 1) * .05]; % analysis bands
+    A = [fc, ones(num_fc, 1) * f_w]; % analysis bands
     B = [fmin, fmax]; % signal bands
 
     err_mtnu = zeros(num_fc, num_trials); % error of MTNUFFT
@@ -163,12 +163,17 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
 
         % * MTNUFFT
         pxx_mtnu_k = nus_k.mtnuspectrum('QuerryFrequencies', fc, ...
+            'MaxFrequency', fmax, ...
+            'NormMethod', 'BGNorm', ...
+            'Halfbandwidth', f_w, ...
             'Timehalfbandwidth', TW, ...
             'NumberTapers', K);
         err_mtnu(:, k) = abs(pow2db(pxx_mtnu_k ./ S_fc)) .^ 2; % squared error
 
         % * MTLS
-        pxx_mtls_k = nus_k.pmtlomb('Timehalfbandwidth', TW, 'InputFrequencies', fc);
+        pxx_mtls_k = nus_k.pmtlomb('Timehalfbandwidth', TW, ...
+            'MaxFrequency', fmax, ...
+            'InputFrequencies', fc);
         pxx_mtls_k = pxx_mtls_k * num_points; % scale to FFT definition of periodogram
         pxx_mtls_k = mean(pxx_mtls_k(:, :, 1), 2); % average over the number of tapers
         err_mtls(:, k) = abs(pow2db(pxx_mtls_k ./ S_fc)) .^ 2; % squared error
@@ -178,9 +183,12 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
             T = T, ...
             SignalBand = B, ...
             AnalysisBand = A, ...
+            MaxFrequency = fmax, ...
             SelectionMethod = 'auto', ...
             NumTapers = [K, 2 * K], ...
-            lambdaFactor = K);
+            lambdaFactor = K, ...
+            DoParallel = true, ...
+            Verbose = false);
         pxx_bgfx_k = bgfx_k.spectrumgpss();
         err_bgfx(:, k) = abs(pow2db(pxx_bgfx_k(:) ./ S_fc)) .^ 2; % squared error
 
@@ -189,9 +197,12 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
             T = T, ...
             SignalBand = B, ...
             AnalysisBand = A, ...
+            MaxFrequency = fmax, ...
             SelectionMethod = 'adaptive', ...
             NumTapers = [K, 2 * K], ...
-            lambdaFactor = -30);
+            lambdaFactor = -30, ...
+            DoParallel = true, ...
+            Verbose = false);
         pxx_bgad_k = bgad_k.spectrumgpss();
         err_bgad(:, k) = abs(pow2db(pxx_bgad_k(:) ./ S_fc)) .^ 2; % squared error
     end % for
