@@ -12,7 +12,13 @@ This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
 ## Build and Test
 
-1. Analysis of example impedance signal: ```imp_example_analysis.m```
+1. Error analysis of MTNUFFT method
+
+   ```mtnufft_error_analysis.m```
+
+2. Analysis of example impedance signal
+
+   ```imp_example_analysis.m```
 
 ## Contribute
 
