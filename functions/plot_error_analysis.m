@@ -36,7 +36,7 @@ function plot_error_analysis(e_table, options)
              ["Uniform", "MissingPoints", "ArithmeticSampling", "Jittering"])} ...
             = ["Uniform", "MissingPoints", "ArithmeticSampling", "Jittering"] % method to generate time points
         options.XLim (1, 2) double {mustBeReal, mustBeFinite} = [0, 0.5] % x axis limit (Hz)
-        options.YLim (1, 2) double {mustBeReal, mustBeFinite} = [2, 10] % y axis limit (dB)
+        options.YLim (1, 2) double {mustBeReal, mustBeFinite} = [2, 10] % y axis limit (dB^2)
     end % optional
 
     tp_method = options.TimePointsMethod;
@@ -56,7 +56,7 @@ function plot_error_analysis(e_table, options)
         ylim(ah_k, y_lim)
 
         xlabel(ah_k, 'Normalized frequency (Hz)')
-        ylabel(ah_k, 'Squared error (dB)')
+        ylabel(ah_k, 'Squared error (dB^2)')
         title(ah_k, sprintf('Time point method: %s', tp_k))
     end % for
 
