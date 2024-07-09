@@ -66,7 +66,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Processing %s time points ...", tp_method_k)
         e_table.(tp_method_k) = err_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fc_max, fc_min, fmin, fmax, T, f_w, gw_std);
+            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std);
         fprintf(" done.\n")
     end % for
 
