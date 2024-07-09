@@ -27,7 +27,7 @@ function plot_speed_analysis(s_table, options)
     % parse inputs
     % ======================================================================
     arguments
-        s_table (1, 1) struct
+        s_table (:, :) table
     end % positional
 
     arguments
