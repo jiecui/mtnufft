@@ -1,5 +1,5 @@
 function s_table = mtnu_speed_analysis(rng_seed, options)
-    % ANALYSIS.MTNU_SPEED_ANALYSIS compare the speed of multitaper nonuniform methods
+    % MTNU_SPEED_ANALYSIS compare the speed of multitaper nonuniform methods
     %
     % Syntax:
     %
@@ -70,7 +70,7 @@ function s_table = mtnu_speed_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Estimating speed for %s time points ...", tp_method_k)
         s_table_k = speed_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fmax, T, f_w, gw_std);
+            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std);
         s_table = cat(1, s_table, s_table_k);
         fprintf(" done.\n")
     end % for
@@ -146,12 +146,12 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
     rng(rng_seed)
 
     % * process sample points
-    RB = bg.gpssmat(0, fmax, t);
+    RB = bg.gpssmat(fmin, fmax, t);
     L = chol(RB, 'lower');
 
     % * parameters for BronezGPSS
-    A = [fc, ones(num_fc, 1) * .05]; % analysis bands
-    B = [0, fmax]; % signal bands
+    A = [fc, ones(num_fc, 1) * f_w]; % analysis bands
+    B = [fmin, fmax]; % signal bands
 
     tc_mtnu = zeros(num_trials, 1); % time cost of MTNUFFT
     tc_mtls = zeros(num_trials, 1); % time cost of MTLS
@@ -166,6 +166,9 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
         % * MTNUFFT
         t0 = tic;
         nus_k.mtnuspectrum('QuerryFrequencies', fc, ...
+            'MaxFrequency', fmax, ...
+            'NormMethod', 'BGNorm', ...
+            'Halfbandwidth', f_w, ...
             'Timehalfbandwidth', TW, ...
             'NumberTapers', K);
         t_int = toc(t0);
@@ -173,7 +176,9 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
 
         % * MTLS
         t0 = tic;
-        nus_k.mtlsspectrum('Timehalfbandwidth', TW, 'InputFrequencies', fc);
+        nus_k.mtlsspectrum('Timehalfbandwidth', TW, ...
+            'MaxFrequency', fmax, ...
+            'InputFrequencies', fc);
         t_int = toc(t0);
         tc_mtls(k) = t_int; % time cost of MTLS
 
@@ -182,9 +187,12 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
             T = T, ...
             SignalBand = B, ...
             AnalysisBand = A, ...
+            MaxFrequency = fmax, ...
             SelectionMethod = 'auto', ...
             NumTapers = [K, 2 * K], ...
-            lambdaFactor = K);
+            lambdaFactor = K, ...
+            DoParallel = false, ...
+            Verbose = false);
         t0 = tic;
         bgfx_k.spectrumgpss();
         t_int = toc(t0);
@@ -197,7 +205,9 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
             AnalysisBand = A, ...
             SelectionMethod = 'adaptive', ...
             NumTapers = [K, 2 * K], ...
-            lambdaFactor = -30);
+            lambdaFactor = -30, ...
+            DoParallel = false, ...
+            Verbose = false);
         t0 = tic;
         bgad_k.spectrumgpss();
         t_int = toc(t0);
