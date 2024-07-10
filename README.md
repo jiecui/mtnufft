@@ -8,7 +8,7 @@ This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
 1. Download and install [Chronux](https://github.com/jiecui/chronux) computational toolbox.
 
-2. Download and install [MTNUFFT](https://github.com/jiecui/mtnufft) package.
+1. Download and install [MTNUFFT](https://github.com/jiecui/mtnufft) package.
 
 ## Build and Test
 
@@ -16,7 +16,11 @@ This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
    ```mtnufft_error_analysis.m```
 
-2. Analysis of example impedance signal
+1. Speed analysis of MTNUFFT method
+
+   ```mtnufft_speed_analysis.m```
+
+1. Analysis of example impedance signal
 
    ```imp_example_analysis.m```
 
