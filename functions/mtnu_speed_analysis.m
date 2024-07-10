@@ -16,7 +16,7 @@ function s_table = mtnu_speed_analysis(rng_seed, options)
     % See also .
 
     % Copyright 2024 Richard J. Cui. Created: Mon 07/08/2024 16:57:45.065 PM
-    % $Revision: 0.1 $  $Date: Mon 07/08/2024 16:57:45.065 PM $
+    % $Revision: 0.2 $  $Date: Wed 07/10/2024 00:29:30.896909 AM $
     %
     % Mayo Clinic Foundation
     % Rochester, MN 55902, USA
@@ -33,6 +33,7 @@ function s_table = mtnu_speed_analysis(rng_seed, options)
     arguments
         options.BandHalfWidth (1, 1) double {mustBePositive} = .05 % half width of the band (Hz)
         options.Duration (1, 1) double {mustBePositive} = 50 % duration of the signal (s)
+        options.DoParallel (1, 1) logical = false % use parallel computing
         options.FcMax (1, 1) double = nan % maximum center frequency of analysis bands (Hz)
         options.FcMin (1, 1) double = nan % minimum center frequency of analysis bands (Hz)
         options.GWNPower (1, 1) double = 0 % power of Gaussian white noise (dB)
@@ -49,6 +50,7 @@ function s_table = mtnu_speed_analysis(rng_seed, options)
 
     f_w = options.BandHalfWidth;
     T = options.Duration;
+    do_par = options.DoParallel;
     fc_max = options.FcMax;
     fc_min = options.FcMin;
     fmax = options.MaxFrequency;
@@ -70,7 +72,8 @@ function s_table = mtnu_speed_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Estimating speed for %s time points ...", tp_method_k)
         s_table_k = speed_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std);
+            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std, ...
+            do_par);
         s_table = cat(1, s_table, s_table_k);
         fprintf(" done.\n")
     end % for
@@ -83,7 +86,7 @@ end % function mtnu_speed_analysis
 % ==========================================================================
 % subroutines
 % ==========================================================================
-function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std)
+function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std, do_par)
 
     arguments
         tp_method (1, :) string
@@ -98,6 +101,7 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
         T (1, 1) double {mustBePositive}
         f_w (1, 1) double {mustBePositive}
         gw_std (1, 1) double {mustBePositive}
+        do_par (1, 1) logical
     end % positional
 
     % pramaeters
@@ -108,6 +112,14 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
 
     if isnan(fc_max)
         fc_max = fmax - f_w;
+    end % if
+
+    % * parallel computing
+    if do_par
+        c = parcluster('local');
+        num_workers = c.NumWorkers;
+    else
+        num_workers = 0;
     end % if
 
     % * sampling points of time instants
@@ -158,7 +170,7 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
     tc_bgfx = zeros(num_trials, 1); % time cost of BGFixed
     tc_bgad = zeros(num_trials, 1); % time cost of BGAdaptive
 
-    parfor k = 1:num_trials
+    parfor (k = 1:num_trials, num_workers)
         % generate samples
         x_k = L * randn(num_points, 1) * gw_std; % zero mean with std gw_std
         nus_k = mtnusp.NUContinuous(x_k, t - t(1));
@@ -191,7 +203,7 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
             SelectionMethod = 'auto', ...
             NumTapers = [K, 2 * K], ...
             lambdaFactor = K, ...
-            DoParallel = false, ...
+            DoParallel = do_par, ...
             Verbose = false);
         t0 = tic;
         bgfx_k.spectrumgpss();
@@ -206,7 +218,7 @@ function s_table = speed_ananlysis_tp(tp_method, rng_seed, num_points, num_trial
             SelectionMethod = 'adaptive', ...
             NumTapers = [K, 2 * K], ...
             lambdaFactor = -30, ...
-            DoParallel = false, ...
+            DoParallel = do_par, ...
             Verbose = false);
         t0 = tic;
         bgad_k.spectrumgpss();
