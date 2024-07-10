@@ -16,7 +16,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     % See also .
 
     % Copyright 2024 Richard J. Cui. Created: Tue 07/02/2024 10:37:03.476 AM
-    % $Revision: 0.3 $  $Date: Mon 07/08/2024 15:31:07.902 PM $
+    % $Revision: 0.4 $  $Date: Wed 07/10/2024 00:29:30.896909 AM $
     %
     % Rocky Creek Dr. NE
     % Rochester, MN 55906, USA
@@ -30,6 +30,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     arguments
         options.BandHalfWidth (1, 1) double {mustBePositive} = .05 % half width of the band (Hz)
         options.Duration (1, 1) double {mustBePositive} = 50 % duration of the signal (s)
+        options.DoParallel (1, 1) logical = true % use parallel computing
         options.FcMax (1, 1) double = nan % maximum center frequency of analysis bands (Hz)
         options.FcMin (1, 1) double = nan % minimum center frequency of analysis bands (Hz)
         options.GWNPower (1, 1) double = 0 % power of Gaussian white noise (dB)
@@ -46,6 +47,7 @@ function e_table = mtnu_error_analysis(rng_seed, options)
 
     f_w = options.BandHalfWidth;
     T = options.Duration;
+    do_par = options.DoParallel;
     fc_max = options.FcMax;
     fc_min = options.FcMin;
     fmax = options.MaxFrequency;
@@ -66,7 +68,8 @@ function e_table = mtnu_error_analysis(rng_seed, options)
     for tp_method_k = tp_method
         fprintf("Processing %s time points ...", tp_method_k)
         e_table.(tp_method_k) = err_ananlysis_tp(tp_method_k, rng_seed, num_points, ...
-            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std);
+            num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std, ...
+            do_par);
         fprintf(" done.\n")
     end % for
 
@@ -78,7 +81,7 @@ end % function mtnu_error_analysis
 % ==========================================================================
 % subroutines
 % ==========================================================================
-function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std)
+function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials, num_fc, fc_min, fc_max, fmin, fmax, T, f_w, gw_std, do_par)
 
     arguments
         tp_method (1, :) string
@@ -93,6 +96,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
         T (1, 1) double {mustBePositive}
         f_w (1, 1) double {mustBePositive}
         gw_std (1, 1) double {mustBePositive}
+        do_par (1, 1) logical
     end % positional
 
     % pramaeters
@@ -103,6 +107,14 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
 
     if isnan(fc_max)
         fc_max = fmax - f_w;
+    end % if
+
+    % * parallel computing
+    if do_par
+        c = parcluster('local');
+        num_workers = c.NumWorkers;
+    else
+        num_workers = 0;
     end % if
 
     % * sampling points of time instants
@@ -156,7 +168,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
     err_bgfx = zeros(num_fc, num_trials); % error of BGFixed
     err_bgad = zeros(num_fc, num_trials); % error of BGAdaptive
 
-    parfor k = 1:num_trials
+    parfor (k = 1:num_trials, num_workers)
         % generate samples
         x_k = L * randn(num_points, 1) * gw_std; % zero mean with std gw_std
         nus_k = mtnusp.NUContinuous(x_k, t - t(1));
@@ -187,7 +199,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
             SelectionMethod = 'auto', ...
             NumTapers = [K, 2 * K], ...
             lambdaFactor = K, ...
-            DoParallel = true, ...
+            DoParallel = do_par, ...
             Verbose = false);
         pxx_bgfx_k = bgfx_k.spectrumgpss();
         err_bgfx(:, k) = abs(pow2db(pxx_bgfx_k(:) ./ S_fc)) .^ 2; % squared error
@@ -201,7 +213,7 @@ function e_table = err_ananlysis_tp(tp_method, rng_seed, num_points, num_trials,
             SelectionMethod = 'adaptive', ...
             NumTapers = [K, 2 * K], ...
             lambdaFactor = -30, ...
-            DoParallel = true, ...
+            DoParallel = do_par, ...
             Verbose = false);
         pxx_bgad_k = bgad_k.spectrumgpss();
         err_bgad(:, k) = abs(pow2db(pxx_bgad_k(:) ./ S_fc)) .^ 2; % squared error
