@@ -30,4 +30,4 @@ This is the code for the paper [(Cui 2024)](https://arxiv.org/abs/2407.01943).
 
 ## References
 
-* __J. Cui__, B. H. Brinkmann, G. A. Worrell, _A fast multitaper power spectrum estimation in nonuniformly sampled time series_, [arXiv, 5704101](https://arxiv.org/abs/2407.01943), 2024 [[PDF]](./docs/fast_mtnufft_arxiv_v1.pdf).
+* __J. Cui__, B. H. Brinkmann, G. A. Worrell, _A fast multitaper power spectrum estimation in nonuniformly sampled time series_, [arXiv, 5704101](https://arxiv.org/abs/2407.01943), 2024 [[PDF]](./docs/fast_mtnufft_arxiv_v1.pdf) (A manuscript is currently under consideration at IEEE T-SP).
