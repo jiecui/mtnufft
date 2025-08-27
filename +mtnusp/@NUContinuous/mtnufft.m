@@ -1,13 +1,47 @@
-function [J, f] = mtnufft(this, x, t, options)
+function [J, f, D] = mtnufft(this, x, t, options)
     % MTNUSP.NUCONTINUOUS.MTNUFFT Compute nonuniform FFT using multitaper method
     %
     % Syntax:
+    %   [J, f, D] = mtnufft(this)
+    %   [J, f, D] = mtnufft(this, x)
+    %   [J, f, D] = mtnufft(this, x, t)
+    %   [J, f, D] = mtnufft(this, x, t, Name, Value)
     %
     % Input(s):
+    %   this        - mtnusp.NUContinuous object
+    %   x           - input signal either vector or matrix n x channels
+    %   t           - time vector of sampling instants
+    %
+    % Name-Value Pair(s):
+    %   'Halfbandwidth'     - half bandwidth of analysis bands (Hz)
+    %                         Default: 0.05
+    %   'MaxFrequency'      - maximum frequency of signal x (Hz)
+    %                         Default: 1/2
+    %   'NumberTapers'      - number of tapers
+    %                         Default: nan (use 2*TW-1)
+    %   'NormMethod'        - normalization method
+    %                         'L2Norm'  - normalize taper to unit L2 norm (default)
+    %                         'BGNorm'  - normalize taper to be consistent with Bronez GPSS
+    %   'TimeHalfbandwidth' - TW = time x halfbandwidth
+    %                         Default: 0 (use T)
+    %   'Tapers'            - tapers to use for multitaper method
+    %                         Default: [] (use DPSS)
+    %   'QuerryFrequencies' - frequencies of evaluation
+    %                         Default: [] (use (0:N-1)/T)
     %
     % Output(s):
+    %   J           - nonuniform FFT of signal x at frequencies f
+    %   f           - frequencies of evaluation
+    %   D           - taper sequence at time instants t
     %
     % Example:
+    %   % generate nonuniformly sampled signal
+    %   fs = 1; % sampling frequency (Hz)
+    %   T = 100; % duration (seconds)
+    %   N = fs * T; % number of samples
+    %   t = sort(T * rand(N, 1)); % random sampling instants
+    %   x = sin(2 * pi * .1 * t) + 0.5 * randn(N, 1); % signal samples
+    %   nus = mtnusp.NUContinuous(x, t);
     %
     % Note:
     %
@@ -23,13 +57,13 @@ function [J, f] = mtnufft(this, x, t, options)
     %
     % See also .
 
-    % 2022-2024 Richard J. Cui. Created: Sat 06/18/2022 10:27:31.613 PM
-    % $Revision: 1.3 $  $Date: Wed 06/26/2024 10:35:08.810 PM $
+    % 2022-2025 Richard J. Cui. Created: Sat 06/18/2022 10:27:31.613 PM
+    % $Revision: 1.4 $  $Date: Tue 08/26/2025 11:59:41.015 PM $
     %
     % Rocky Creek Dr. NE
     % Rochester, MN 55906, USA
     %
-    % Email: richard.cui@utoronto.ca
+    % Email: richard.jie.cui@gmail.com
 
     % ======================================================================
     % parse inputs
