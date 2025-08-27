@@ -151,7 +151,7 @@ function [J, f, D] = mtnufft(this, x, t, options)
         % ***********************************************************
         % * interpolate Slepian (DPSS) to time instants of sampling *
         % ***********************************************************
-        % This part is the core idea. Need error analysis.
+        % This part is a core idea. Need error analysis (Springford 2020).
         v = (0:N - 1) * avg_d_t; % time vector of sampling instants of DPSS
 
         dps_x = zeros(size(tapers));
