@@ -169,7 +169,7 @@ function t = get_time_points(this, num_points, method, options)
         case "TB2_RV"
             n = 1:60;
             t = n * 5/6;
-            t(randperm(s, 60, 10)) = [];
+            t(randperm(60, 10)) = [];
         case "TB3"
             t = this.get_time_points(num_points, "DAS", ...
                 TimeStart = t_start, ...
