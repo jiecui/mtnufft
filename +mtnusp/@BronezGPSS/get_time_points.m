@@ -2,10 +2,31 @@ function t = get_time_points(this, num_points, method, options)
     % MTNUSP.BRONEZGPSS.GET_TIME_POINTS generates time points for the simulation
     %
     % Syntax:
+    %   t = this.get_time_points(num_points)
+    %   t = this.get_time_points(num_points, method)
+    %   t = this.get_time_points(num_points, method, Name, Value)
     %
     % Input(s):
+    %   num_points  - Number of time points to generate
+    %   method      - Sampling method (default: "TB1")
+    %
+    % Name-Value Pair Arguments:
+    %   ControlProbability    - Control probability for RBUS, RBFS, DAS
+    %                           (default: 0.5)
+    %   ExponentialMu         - Mu for mean of exponential probability
+    %                           distribution (default: 1)
+    %   JitterMu              - Mu for mean of jittered sampling (RJS only)
+    %                           (default: 0)
+    %   JitterSigma           - Sigma for standard deviation of jittered
+    %                           sampling (RJS only) (default: 0.01)
+    %   MaxNumPoints          - Maximum number of time points to generate
+    %                           (default: 1000)
+    %   Seed                  - Random seed for reproducibility (default: 42)
+    %   TimeStart             - Start time (seconds) (default: 0)
+    %   TimeEnd               - End time (seconds) (default: 1)
     %
     % Output(s):
+    %   t           - Generated time points (row vector)
     %
     % Example:
     %
@@ -21,21 +42,25 @@ function t = get_time_points(this, num_points, method, options)
     %                 method 1 in Bronez, 1988)
     %   TB2         - Regular over-sampling with some missing samples (RBFS)
     %                 (Sampling method 3 in Bronez, 1988)
+    %   TB2_RV      - Regular over-sampling with some random missing samples
+    %                 (RBFS) (Sampling method 3 in Bronez, 1988)
     %   TB3         - Arithmetic sampling (DAS) (Sampling method 2 in Bronez,
     %                 1988)
-    %   MD_2Hz
+    %   TB3_RV      - Arithmetic sampling with random control probability
+    %                 (DAS) (Sampling method 2 in Bronez, 1988)
+    %   MD_2Hz      - Modified discrete-time Bronez sequence at 2 Hz (RBFS)
     %
     % References:
     %
     % See also .
 
-    % Copyright 2023 Richard J. Cui. Created: Wed 12/13/2023 10:57:11.432 PM
-    % $Revision: 0.3 $  $Date: Tue 06/18/2024 07:36:57.286 AM $
+    % Copyright 2023-2025 Richard J. Cui. Created: Wed 12/13/2023 10:57:11.432 PM
+    % $Revision: 0.4 $  $Date: Fri 08/29/2025 11:40:53.183 PM $
     %
     % Rocky Creek Dr. NE
     % Rochester, MN 55906, USA
     %
-    % Email: richard.cui@utoronto.ca
+    % Email: richard.jie.cui@gmail.com
 
     % ======================================================================
     % parse inputs
@@ -43,8 +68,10 @@ function t = get_time_points(this, num_points, method, options)
     arguments
         this (1, 1) mtnusp.BronezGPSS
         num_points (1, 1) double {mustBeInteger} % number of time points to generate
-        method (1, 1) string {mustBeMember(method, ...
-                                  ["DRS", "DAS", "RJS", "RBUS", "RBFS", "RPS", "RUS", "TB1", "TB2", "TB3", "MD_2Hz"])} ...
+        method (1, 1) string ...
+            {mustBeMember(method, [["DRS", "DAS", "RJS", "RBUS", "RBFS"], ...
+                                    ["RPS", "RUS", "TB1", "TB2", "TB2_RV"], ...
+                                    ["TB3", "TB3_RV", "MD_2Hz"]])} ...
             = "TB1"
     end % positional
 
@@ -64,12 +91,6 @@ function t = get_time_points(this, num_points, method, options)
     max_num_points = options.MaxNumPoints;
     t_start = options.TimeStart;
     t_end = options.TimeEnd;
-
-    if isempty(t_end)
-        T = this.T;
-        t_end = t_start + T;
-    end % if
-
     ctrl_p = options.ControlProbability;
     rng_seed = options.Seed;
     mu = options.ExponentialMu;
@@ -80,6 +101,11 @@ function t = get_time_points(this, num_points, method, options)
     % generate random stream
     % ----------------------
     s = RandStream('mt19937ar', 'Seed', rng_seed);
+
+    if isempty(t_end)
+        T = this.T;
+        t_end = t_start + T;
+    end % if
 
     % generate time points
     % --------------------
@@ -140,11 +166,20 @@ function t = get_time_points(this, num_points, method, options)
             n = 1:60;
             t = n * 5/6;
             t([1, 5, 17, 18, 19, 23, 27, 32, 53, 56]) = [];
+        case "TB2_RV"
+            n = 1:60;
+            t = n * 5/6;
+            t(randperm(s, 60, 10)) = [];
         case "TB3"
             t = this.get_time_points(num_points, "DAS", ...
                 TimeStart = t_start, ...
                 TimeEnd = t_end, ...
                 ControlProbability = 1/4);
+        case "TB3_RV"
+            t = this.get_time_points(num_points, "DAS", ...
+                TimeStart = t_start, ...
+                TimeEnd = t_end, ...
+                ControlProbability = rand(1) * (1 - 1 / num_points) + 1 / num_points);
         case "MD_2Hz"
             n = 1:60;
             t = n * 5/12;
